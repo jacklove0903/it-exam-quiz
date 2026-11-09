@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>信息技术教资刷题</title>
+<style>
+  :root {
+    --primary: #4A6CF7;
+    --primary-light: #6A8BFF;
+    --bg: #F5F6FA;
+    --card: #ffffff;
+    --text: #333333;
+    --text-2: #666666;
+    --text-3: #999999;
+    --green: #4CAF6D;
+    --red: #E05B5B;
+    --orange: #E8A23B;
+    --border: #E5E8F0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    font-size: 15px;
+  }
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+    padding-bottom: 80px;
+  }
+  /* 顶栏 */
+  .topbar {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    padding: 16px 16px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-sub { font-size: 12px; opacity: .85; margin-top: 4px; }
+  .back-btn {
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  /* 卡片 */
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 12px 14px 0;
+    box-shadow: 0 1px 6px rgba(0,0,0,.04);
+  }
+  /* 首页 */
+  .stats-row { display: flex; padding-top: 14px; }
+  .stats-row .s-item { flex: 1; text-align: center; }
+  .stats-row .s-num { font-size: 24px; font-weight: 700; }
+  .stats-row .s-num small { font-size: 12px; opacity: .8; font-weight: 400; }
+  .stats-row .s-label { font-size: 12px; opacity: .85; margin-top: 2px; }
+  .in-topbar .card { box-shadow: none; }
+  .mode-card {
+    display: flex; align-items: center; cursor: pointer;
+    transition: transform .1s;
+  }
+  .mode-card:active { transform: scale(.98); }
+  .mode-icon { font-size: 26px; margin-right: 14px; }
+  .mode-main { flex: 1; }
+  .mode-title { font-size: 16px; font-weight: 700; }
+  .mode-desc { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+  .mode-arrow { color: #ccc; font-size: 20px; }
+  .section-title { margin: 20px 16px 2px; font-size: 15px; font-weight: 700; }
+  .chapter-card {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px; cursor: pointer;
+  }
+  .chapter-card:active { transform: scale(.98); }
+  .chapter-name { font-size: 14px; }
+  .chapter-count { color: var(--text-3); font-size: 13px; margin-right: 8px; }
+  /* 科目切换 */
+  .subject-switch {
+    display: flex; margin: 12px 14px 0;
+    background: #E9ECF5; border-radius: 10px; padding: 4px;
+  }
+  .subject-switch .s-btn {
+    flex: 1; text-align: center; padding: 9px 0; border-radius: 8px;
+    font-size: 14px; color: var(--text-2); cursor: pointer; border: none; background: none;
+  }
+  .subject-switch .s-btn.active {
+    background: #fff; color: var(--primary); font-weight: 700;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+  }
+  /* 标签 */
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 5px;
+    font-size: 11px; background: #EEF1FE; color: var(--primary); margin-right: 6px;
+  }
+  .tag-d1 { background: #EBF7EE; color: var(--green); }
+  .tag-d2 { background: #FFF6E5; color: var(--orange); }
+  .tag-d3 { background: #FDEEEE; color: var(--red); }
+  /* 答题 */
+  .quiz-top {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px 0;
+  }
+  .progress-line { flex: 1; height: 6px; background: #E9ECF5; border-radius: 3px; overflow: hidden; }
+  .progress-inner { height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s; }
+  .progress-text { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+  .btn-submit-exam {
+    background: #fff; color: var(--primary); border: 1.5px solid var(--primary);
+    border-radius: 20px; font-size: 12px; padding: 4px 14px; cursor: pointer; white-space: nowrap;
+  }
+  .question-card { margin-top: 8px; }
+  .q-meta { margin-bottom: 10px; }
+  .q-text { font-size: 15.5px; line-height: 1.75; white-space: pre-line; margin-bottom: 14px; }
+  .material {
+    background: #F7F8FC; border-left: 3px solid var(--primary);
+    border-radius: 8px; padding: 12px; font-size: 14px; line-height: 1.8;
+    white-space: pre-line; margin-bottom: 14px; color: #444;
+  }
+  .material-label { font-weight: 700; color: var(--primary); font-size: 12px; margin-bottom: 6px; }
+  /* 选项 */
+  .option {
+    display: flex; align-items: flex-start; padding: 12px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    margin-bottom: 10px; cursor: pointer; transition: all .15s;
+  }
+  .option.selected { border-color: var(--primary); background: #F4F6FF; }
+  .option.correct { border-color: var(--green); background: #F0FAF3; }
+  .option.wrong { border-color: var(--red); background: #FDF2F2; }
+  .opt-label {
+    width: 24px; height: 24px; line-height: 24px; text-align: center;
+    background: #F0F1F6; border-radius: 50%; font-size: 13px;
+    color: var(--text-2); margin-right: 10px; flex-shrink: 0;
+  }
+  .option.selected .opt-label, .option.correct .opt-label, .option.wrong .opt-label { color: #fff; }
+  .option.selected .opt-label { background: var(--primary); }
+  .option.correct .opt-label { background: var(--green); }
+  .option.wrong .opt-label { background: var(--red); }
+  .opt-text { flex: 1; font-size: 14px; line-height: 1.6; white-space: pre-line; }
+  .opt-mark { margin-left: 8px; font-weight: 700; color: var(--green); }
+  .opt-mark.wrong { color: var(--red); }
+  /* 解析 */
+  .analysis {
+    background: #F7F8FC; border-radius: 10px; padding: 12px; margin-top: 6px;
+    animation: fadeIn .25s;
+  }
+  .analysis-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .analysis-title.ok { color: var(--green); }
+  .analysis-title.no { color: var(--red); }
+  .analysis-body { font-size: 13px; color: var(--text-2); line-height: 1.8; white-space: pre-line; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  /* 材料题子问 */
+  .subq { margin-bottom: 12px; }
+  .subq-q { font-size: 14.5px; line-height: 1.7; margin-bottom: 8px; }
+  .subq-q b { color: var(--primary); }
+  .btn-ref {
+    background: none; border: 1.5px solid var(--primary); color: var(--primary);
+    font-size: 12.5px; padding: 5px 14px; border-radius: 18px; cursor: pointer;
+  }
+  .subq-answer {
+    background: #F0FAF3; border-radius: 8px; padding: 12px;
+    font-size: 13px; line-height: 1.8; color: #3A5F47; white-space: pre-line; margin-top: 8px;
+    animation: fadeIn .25s;
+  }
+  .self-rate { display: flex; gap: 10px; margin-top: 10px; }
+  .rate-btn {
+    flex: 1; padding: 9px 0; border-radius: 8px; font-size: 13.5px;
+    border: none; cursor: pointer;
+  }
+  .rate-yes { background: var(--green); color: #fff; }
+  .rate-no { background: #F0F1F6; color: var(--text-2); }
+  .rate-btn:disabled { opacity: .55; cursor: default; }
+  .rate-done { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+  /* 底部操作 */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 520px;
+    background: #fff; padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -2px 10px rgba(0,0,0,.06);
+    display: flex; gap: 10px; z-index: 10;
+  }
+  .btn {
+    flex: 1; border: none; border-radius: 24px; font-size: 15px;
+    padding: 12px 0; cursor: pointer;
+  }
+  .btn:active { opacity: .85; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-ghost { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-danger-ghost { background: #fff; color: var(--red); border: 1.5px solid #F2C4C4; }
+  .btn:disabled { background: #C8CFE8; cursor: default; }
+  /* 出分页 */
+  .result { text-align: center; padding: 30px 16px; }
+  .score-circle {
+    width: 110px; height: 110px; border-radius: 50%; margin: 10px auto 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .score-num { font-size: 40px; font-weight: 700; line-height: 1.1; }
+  .score-unit { font-size: 12px; opacity: .85; }
+  .result-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+  /* 错题本/我的 */
+  .op-bar { display: flex; align-items: center; justify-content: space-between; margin: 14px 16px 0; }
+  .op-count { font-size: 13px; color: var(--text-2); }
+  .btn-mini {
+    background: var(--primary); color: #fff; border: none; font-size: 12px;
+    padding: 6px 14px; border-radius: 16px; cursor: pointer; margin-left: 8px;
+  }
+  .btn-mini.danger { background: var(--red); }
+  .empty { text-align: center; padding: 70px 40px; }
+  .empty-icon { font-size: 52px; margin-bottom: 14px; }
+  .empty-text { font-size: 16px; font-weight: 700; }
+  .empty-sub { font-size: 13px; color: var(--text-3); margin-top: 8px; }
+  .wrong-card { margin-top: 10px; }
+  .w-answer { font-size: 13.5px; color: var(--green); font-weight: 700; margin: 8px 0; }
+  .w-analysis { font-size: 12.5px; color: var(--text-2); line-height: 1.8; white-space: pre-line; }
+  .stat-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-2); padding: 9px 0; }
+  .stat-row b { color: var(--text); }
+  .stat-row b.warn { color: var(--red); }
+  .stat-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .about { margin: 22px 16px; font-size: 12px; color: var(--text-3); line-height: 1.9; }
+  .about b { color: var(--text-2); }
+  .hide { display: none !important; }
+  .exam-note { font-size: 12px; color: var(--orange); padding: 8px 16px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ 首页 ============ -->
+  <div id="view-home">
+    <div class="topbar">
+      <div class="topbar-title">信息技术教资刷题</div>
+      <div class="topbar-sub">初中 · 高中《学科知识与教学能力》仿真练习</div>
+    </div>
+
+    <!-- 进度 -->
+    <div class="card in-topbar" style="margin-top:12px; background:transparent; box-shadow:none; padding:0;">
+      <div class="card" style="margin:0;">
+        <div class="stats-row">
+          <div class="s-item"><div class="s-num" id="st-done">0<small id="st-total">/0</small></div><div class="s-label">已刷题数</div></div>
+          <div class="s-item"><div class="s-num" id="st-correct">0</div><div class="s-label">答对题数</div></div>
+          <div class="s-item"><div class="s-num" id="st-acc">0%</div><div class="s-label">正确率</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 科目切换 -->
+    <div class="subject-switch">
+      <button class="s-btn active" data-subject="junior" onclick="switchSubject('junior')">初中信息技术</button>
+      <button class="s-btn" data-subject="senior" onclick="switchSubject('senior')">高中信息技术</button>
+    </div>
+
+    <!-- 模式入口 -->
+    <div class="card mode-card" onclick="startQuiz('all')">
+      <div class="mode-icon">📚</div>
+      <div class="mode-main"><div class="mode-title">顺序刷题</div><div class="mode-desc">按知识点顺序练习，优先推送未掌握的题</div></div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="card mode-card" onclick="startQuiz('case')">
+      <div class="mode-icon">🗂️</div>
+      <div class="mode-main"><div class="mode-title">材料分析题专练</div><div class="mode-desc">教学案例分析大题，对照参考答案自评</div></div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="card mode-card" onclick="startExam()">
+      <div class="mode-icon">📝</div>
+      <div class="mode-main"><div class="mode-title">模拟测试</div><div class="mode-desc">随机抽 20 道客观题，统一交卷出分</div></div>
+      <div class="mode-arrow">›</div>
+    </div>
+
+    <!-- 章节练习 -->
+    <div class="section-title">章节练习</div>
+    <div id="chapter-list"></div>
+
+    <!-- 其他入口 -->
+    <div class="card mode-card" onclick="showView('view-wrong')">
+      <div class="mode-icon">📕</div>
+      <div class="mode-main"><div class="mode-title">错题本</div><div class="mode-desc">答错的题自动收进来，精准补漏</div></div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="card mode-card" onclick="showView('view-mine')">
+      <div class="mode-icon">👤</div>
+      <div class="mode-main"><div class="mode-title">我的 / 学习统计</div><div class="mode-desc">查看两科目进度，重置学习数据</div></div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="about">
+      <b>关于题库</b>：题目依据 2025/2026 年教师资格笔试《信息技术学科知识与教学能力》（初中/高中）真题的知识点与难度水平编写，为仿真练习题；基础题为主，部分题目标注「较难」供拔高训练。进度保存在本机浏览器中，清除浏览器数据会重置进度。
+    </div>
+  </div>
+
+  <!-- ============ 答题页 ============ -->
+  <div id="view-quiz" class="hide">
+    <div class="topbar">
+      <div class="topbar-title">
+        <button class="back-btn" onclick="quitQuiz()">‹ 退出</button>
+        <span id="quiz-title">刷题</span>
+        <span id="exam-submit-wrap"><button class="back-btn" onclick="submitExam()">交卷</button></span>
+        <span id="quiz-progress" style="font-size:14px;"></span>
+      </div>
+    </div>
+    <div id="exam-note" class="exam-note hide">📝 模拟测试模式：作答不显示对错，交卷后统一出分</div>
+    <div id="question-area"></div>
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" id="btn-prev" onclick="prevQ()">上一题</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextQ()">下一题</button>
+    </div>
+  </div>
+
+  <!-- ============ 错题本 ============ -->
+  <div id="view-wrong" class="hide">
+    <div class="topbar">
+      <div class="topbar-title"><button class="back-btn" onclick="showView('view-home')">‹ 返回</button><span>错题本</span><span></span></div>
+    </div>
+    <div class="subject-switch">
+      <button class="s-btn active" id="ws-junior" onclick="switchWrongSubject('junior')">初中</button>
+      <button class="s-btn" id="ws-senior" onclick="switchWrongSubject('senior')">高中</button>
+    </div>
+    <div id="wrong-body"></div>
+  </div>
+
+  <!-- ============ 我的 ============ -->
+  <div id="view-mine" class="hide">
+    <div class="topbar">
+      <div class="topbar-title"><button class="back-btn" onclick="showView('view-home')">‹ 返回</button><span>我的 / 学习统计</span><span></span></div>
+    </div>
+    <div id="mine-body"></div>
+    <button class="btn btn-danger-ghost" style="margin:20px 14px 0; width:calc(100% - 28px);" onclick="resetAll()">重置学习数据</button>
+  </div>
+</div>
+
+<script>
+// ==================== 题库数据 ====================
+const BANKS = {"junior":{"name":"初中信息技术","questions":[{"id":"j001","chapter":"信息与信息技术","kp":"信息的特征","difficulty":1,"type":"single","question":"下列说法中，能体现信息具有价值相对性的是（  ）","options":["同一条天气预报信息，对出行者和室内工作者的重要程度不同","信息可以被多人同时获取","古代的烽火信息今天仍有记载","天气预报需要每天更新"],"answer":0,"analysis":"同一信息对不同的人价值不同，体现的是信息的价值相对性；B 体现共享性，C 体现可存储性，D 体现时效性。"},{"id":"j002","chapter":"信息与信息技术","kp":"信息的载体","difficulty":1,"type":"single","question":"下列关于数据与信息的说法，正确的是（  ）","options":["数据就是信息","信息是数据的载体","数据经过加工处理后可以成为信息","图像不能承载数据"],"answer":2,"analysis":"数据是信息的载体，信息是数据经过加工处理后得到的、有意义的内容。故 C 正确，A、B 颠倒了二者关系。"},{"id":"j003","chapter":"信息与信息技术","kp":"信息技术发展史","difficulty":1,"type":"single","question":"世界上第一台通用电子计算机诞生于（  ）","options":["1945年","1946年","1956年","1964年"],"answer":1,"analysis":"1946 年，ENIAC 在美国宾夕法尼亚大学诞生，是世界上第一台通用电子计算机。"},{"id":"j004","chapter":"信息与信息技术","kp":"信息技术应用","difficulty":2,"type":"single","question":"小明通过网络平台实时查询某城市共享单车的位置，该应用主要利用的技术是（  ）","options":["虚拟现实","定位与物联网技术","云计算视频转码","区块链存证"],"answer":1,"analysis":"共享单车定位依赖 GPS/北斗等定位技术与物联网通信技术，将车锁状态上传云端。"},{"id":"j005","chapter":"信息与信息技术","kp":"信息安全","difficulty":1,"type":"judge","question":"为了方便记忆，将银行卡密码设置为出生日期是可以接受的做法。","options":["正确","错误"],"answer":1,"analysis":"出生日期属于易被猜测的个人信息，使用其作为密码属于典型的弱口令，存在安全隐患。"},{"id":"j006","chapter":"计算机基础","kp":"冯·诺依曼结构","difficulty":2,"type":"single","question":"冯·诺依曼型计算机的基本工作原理是（  ）","options":["并行处理","存储程序与程序控制","分布式计算","实时操作系统调度"],"answer":1,"analysis":"冯·诺依曼体系结构的核心思想是\"存储程序、程序控制\"：程序与数据预先存入存储器，计算机按地址顺序自动取指执行。"},{"id":"j007","chapter":"计算机基础","kp":"存储单位换算","difficulty":1,"type":"single","question":"1GB 等于（  ）","options":["1000MB","1024MB","1024KB","1000KB"],"answer":1,"analysis":"存储单位换算：1GB = 1024MB，1MB = 1024KB，1KB = 1024B。"},{"id":"j008","chapter":"计算机基础","kp":"二进制运算","difficulty":2,"type":"single","question":"与十进制数 45 相等的二进制数是（  ）","options":["101101","101011","110101","100111"],"answer":0,"analysis":"45 = 32 + 8 + 4 + 1，即二进制 101101。可用除 2 取余法验证。"},{"id":"j009","chapter":"计算机基础","kp":"计算机组成","difficulty":2,"type":"single","question":"在计算机的硬件系统中，负责执行算术运算和逻辑运算的部件是（  ）","options":["控制器","存储器","运算器","输入设备"],"answer":2,"analysis":"运算器（ALU）负责算术运算与逻辑运算；控制器负责指挥协调各部件工作。"},{"id":"j010","chapter":"计算机基础","kp":"操作系统与文件管理","difficulty":1,"type":"single","question":"在 Windows 系统中，文件主名与扩展名之间用（  ）分隔。","options":["英文句点","中文句号","斜杠","空格"],"answer":0,"analysis":"Windows 文件命名规则中，主名与扩展名之间用英文句点\".\"分隔。"},{"id":"j011","chapter":"计算机基础","kp":"进制转换","difficulty":3,"type":"single","question":"某字符的 ASCII 码为十进制 65（即字母 A），则字母 F 的 ASCII 码对应的十进制数是（  ）","options":["69","70","71","72"],"answer":1,"analysis":"大写字母按序连续编码，A=65，则 F = 65 + 5 = 70。"},{"id":"j012","chapter":"办公软件","kp":"Excel 公式与引用","difficulty":2,"type":"single","question":"在 Excel 中，单元格 B1 中的公式为\"=A1*$B$2\"，将其复制到 B2 后，公式变为（  ）","options":["=A2*$B$2","=A2*$B$3","=B1*$B$2","=A1*$B$2"],"answer":0,"analysis":"A1 是相对引用，向下复制一行变为 A2；$B$2 是绝对引用，复制后不变。"},{"id":"j013","chapter":"办公软件","kp":"Excel 函数","difficulty":2,"type":"single","question":"在 Excel 中，要统计 B2:B20 区域中数值大于 80 的单元格个数，应使用的函数是（  ）","options":["SUMIF(B2:B20, \">80\")","COUNT(B2:B20)","COUNTIF(B2:B20, \">80\")","AVERAGEIF(B2:B20, \">80\")"],"answer":2,"analysis":"COUNTIF 用于按条件统计单元格个数；SUMIF 是条件求和，AVERAGEIF 是条件求平均，COUNT 只统计数值个数。"},{"id":"j014","chapter":"办公软件","kp":"Word 排版","difficulty":1,"type":"single","question":"在 Word 中，若使文档中所有\"信息技术\"一词都变为红色，最高效的操作是（  ）","options":["逐个选中后设置颜色","使用\"查找和替换\"中的格式替换功能","使用格式刷逐一刷","删除后重新输入"],"answer":1,"analysis":"利用\"查找和替换\"对话框中的\"格式→字体\"设置替换文本颜色，可一次性完成批量格式修改。"},{"id":"j015","chapter":"办公软件","kp":"数据图表","difficulty":2,"type":"single","question":"要展示某班学生一周内每日作业提交率随时间的变化趋势，最合适的图表类型是（  ）","options":["饼图","柱形图","折线图","雷达图"],"answer":2,"analysis":"折线图适合反映数据随时间（或有序类别）的变化趋势；饼图适合反映构成比例，柱形图适合类别间数量对比。"},{"id":"j016","chapter":"网络基础","kp":"IP 地址","difficulty":2,"type":"single","question":"下列 IP 地址中，属于 C 类地址的是（  ）","options":["10.1.2.3","172.16.1.1","192.168.1.1","126.0.0.1"],"answer":2,"analysis":"C 类地址第一段范围是 192~223；A 类为 1~126，B 类为 128~191，10.x 和 172.16.x 分别属于 A、B 类的私有地址。"},{"id":"j017","chapter":"网络基础","kp":"域名与 DNS","difficulty":1,"type":"single","question":"域名解析系统（DNS）的主要作用是（  ）","options":["加密网络传输的数据","将域名转换为对应的 IP 地址","分配电子邮箱地址","检测网络故障"],"answer":1,"analysis":"DNS 的作用是实现域名与 IP 地址之间的映射，方便用户通过域名访问主机。"},{"id":"j018","chapter":"网络基础","kp":"网络分类与拓扑","difficulty":2,"type":"single","question":"某学校机房内约 50 台计算机组成网络，按覆盖范围划分，该网络属于（  ）","options":["广域网（WAN）","城域网（MAN）","局域网（LAN）","个人区域网（PAN）"],"answer":2,"analysis":"覆盖范围通常在几公里以内的网络（如校园、机房）属于局域网。"},{"id":"j019","chapter":"网络基础","kp":"电子邮件","difficulty":1,"type":"single","question":"发送电子邮件使用的协议主要是（  ）","options":["SMTP","POP3","HTTP","FTP"],"answer":0,"analysis":"SMTP 用于发送邮件，POP3/IMAP 用于接收邮件；HTTP 用于网页传输，FTP 用于文件传输。"},{"id":"j020","chapter":"网络基础","kp":"网络安全","difficulty":2,"type":"judge","question":"防火墙能够防止网络中所有类型的病毒入侵计算机。","options":["正确","错误"],"answer":1,"analysis":"防火墙主要按规则控制网络访问，无法防范通过邮件附件、U 盘等途径传播的病毒，防病毒还需杀毒软件。"},{"id":"j021","chapter":"多媒体技术","kp":"位图与矢量图","difficulty":1,"type":"single","question":"将一幅矢量图形放大很多倍后，最可能出现的情况是（  ）","options":["出现马赛克失真","图形不失真、清晰度不变","文件体积等比例变大","颜色数量减少"],"answer":1,"analysis":"矢量图以数学公式描述图形，缩放不失真；位图由像素构成，放大后会出现马赛克失真。"},{"id":"j022","chapter":"多媒体技术","kp":"图像文件格式","difficulty":1,"type":"single","question":"下列图像文件格式中，支持透明背景且常用于网页的是（  ）","options":["BMP","PNG","MIDI","WAV"],"answer":1,"analysis":"PNG 支持无损压缩与透明通道，常用于网页；MIDI、WAV 是音频格式。"},{"id":"j023","chapter":"多媒体技术","kp":"声音数字化","difficulty":3,"type":"single","question":"对一段模拟声音信号进行数字化，采样频率为 44.1kHz、量化位数为 16 位、单声道，则每秒钟产生的数据量约为（  ）","options":["约 88KB","约 44KB","约 176KB","约 705KB"],"answer":0,"analysis":"数据量 = 采样频率 × 量化位数 × 声道数 × 时间 = 44100 × 16 × 1 = 705600 bit/s ≈ 88200 B/s ≈ 86KB/s，故每秒约 88KB（选项 A 最接近）。"},{"id":"j024","chapter":"多媒体技术","kp":"视频参数","difficulty":2,"type":"judge","question":"在帧率和画面尺寸不变的情况下，提高视频码率会使视频文件体积变大。","options":["正确","错误"],"answer":0,"analysis":"码率表示单位时间内的数据量，码率越高单位时间内记录的信息越多，文件体积越大，画质通常也越好。"},{"id":"j025","chapter":"数据库基础","kp":"关系数据库基本概念","difficulty":2,"type":"single","question":"在关系型数据库中，二维表的一行称为（  ）","options":["字段","记录","属性","数据项"],"answer":1,"analysis":"二维表中一行称为一条记录（元组），一列称为一个字段（属性）。"},{"id":"j026","chapter":"数据库基础","kp":"主键","difficulty":2,"type":"single","question":"下列关于数据表主键的说法，正确的是（  ）","options":["主键字段的值可以重复","主键字段的值不能为空","每个表必须有多个主键","主键只能是数字类型"],"answer":1,"analysis":"主键用于唯一标识一条记录，其值必须唯一且不能为空；主键可以由文本、数字等类型构成（如身份证号）。"},{"id":"j027","chapter":"数据库基础","kp":"数据库应用","difficulty":1,"type":"single","question":"下列场景中最适合使用数据库管理系统管理数据的是（  ）","options":["记录 3000 名学生的成绩并支持按班级、科目灵活查询","撰写一篇日记","绘制一张海报","播放一段视频"],"answer":0,"analysis":"数据库适合管理数据量大、需要多条件查询和统计的数据；日记、绘图、播放属于文字处理、图形图像和媒体应用场景。"},{"id":"j028","chapter":"程序设计","kp":"算法与流程图","difficulty":2,"type":"single","question":"下列关于算法的说法，错误的是（  ）","options":["一个算法必须在有限步骤内结束","算法的每一步都必须有明确的含义","同一个问题只能有一种算法","算法可以没有输入，但至少要有一个输出"],"answer":2,"analysis":"解决同一个问题的算法往往不止一种（如排序有冒泡、选择等多种），C 说法错误；A、B、D 是算法的基本特征。"},{"id":"j029","chapter":"程序设计","kp":"Python 循环结构","difficulty":2,"type":"single","question":"运行以下 Python 代码，输出的结果是（  ）\ns = 0\nfor i in range(1, 5):\n    s = s + i\nprint(s)","options":["10","15","6","5"],"answer":0,"analysis":"range(1, 5) 生成 1、2、3、4，累加和为 1+2+3+4=10。注意 range 不含右端点 5。"},{"id":"j030","chapter":"程序设计","kp":"程序三种基本结构","difficulty":1,"type":"single","question":"程序设计的三种基本控制结构是（  ）","options":["顺序、分支、循环","输入、处理、输出","数组、函数、对象","编译、链接、运行"],"answer":0,"analysis":"结构化程序设计的三种基本结构是顺序结构、选择（分支）结构和循环结构。"},{"id":"j031","chapter":"程序设计","kp":"Python 变量与类型","difficulty":3,"type":"single","question":"运行以下 Python 代码，输出的结果是（  ）\nprint(9 // 2, 9 % 2, 9 / 2)","options":["4 1 4.5","4.5 1 4","4 1 4","5 1 4.5"],"answer":0,"analysis":"\"//\" 为整除运算，9//2=4；\"%\"为取余运算，9%2=1；\"/\"为普通除法，结果为浮点数 4.5。"},{"id":"j032","chapter":"程序设计","kp":"调试与纠错","difficulty":2,"type":"single","question":"程序运行时出现\"IndexError: list index out of range\"，最可能的原因是（  ）","options":["变量名拼写错误","访问了列表中不存在的下标位置","缩进格式错误","缺少函数返回值"],"answer":1,"analysis":"该错误表示下标越界，例如列表只有 5 个元素却访问了第 6 个位置（下标 5）。"},{"id":"j033","chapter":"课程与教学论","kp":"课程目标","difficulty":2,"type":"single","question":"初中信息技术课程强调提升学生的信息素养，下列不属于其主要内容的是（  ）","options":["信息意识","计算思维","数学建模能力","数字化学习与创新能力"],"answer":2,"analysis":"信息技术学科核心素养包括信息意识、计算思维、数字化学习与创新、信息社会责任四个方面；数学建模是数学学科素养。"},{"id":"j034","chapter":"课程与教学论","kp":"教学设计","difficulty":2,"type":"single","question":"王老师讲授\"Excel 数据处理\"一课时，先让学生用函数统计班级成绩，再分组讨论如何形成成绩分析报告。这一教学设计主要体现了（  ）","options":["以教师讲授为中心","以真实任务驱动学生学习","以书面考试为目的","以纯理论推导为主线"],"answer":1,"analysis":"围绕真实任务（统计并分析本班成绩）组织学习活动，属于典型的任务驱动教学法。"},{"id":"j035","chapter":"课程与教学论","kp":"教学方法","difficulty":2,"type":"single","question":"信息技术课上，教师演示\"使用前景色工具美化图片\"的操作步骤后让学生模仿练习，这种教学方法是（  ）","options":["讲授法","演示法","实验法","讨论法"],"answer":1,"analysis":"教师通过展示直观操作过程使学生获得感性认识并加以模仿，属于演示法。"},{"id":"j036","chapter":"课程与教学论","kp":"教学评价","difficulty":3,"type":"single","question":"李老师在单元学习结束后组织学生完成上机测评，并将成绩与学期初的测评对比，分析学生的进步幅度。该评价方式属于（  ）","options":["诊断性评价","形成性评价","终结性评价与自身纵向比较相结合","同伴互评"],"answer":2,"analysis":"单元结束时的测评属于终结性评价；与学期初对比分析进步幅度，属于基于个体的纵向增值比较，两者相结合。"},{"id":"j037","chapter":"课程与教学论","kp":"课堂管理","difficulty":2,"type":"judge","question":"上机课中个别学生偷偷玩游戏，教师应一律没收其电脑并当众批评，以儆效尤。","options":["正确","错误"],"answer":1,"analysis":"简单粗暴的惩罚不利于学生发展，教师应先提醒与引导，结合教学任务设置、机房控制软件等进行规范管理，兼顾教育性与尊重学生。"},{"id":"jc01","chapter":"课程与教学论","kp":"教学设计评价","difficulty":2,"type":"case","material":"王老师在教学《数据统计——Excel 函数》一课时，先用 20 分钟完整讲解了 SUM、AVERAGE 函数的语法和参数，随后让学生打开课件，一步一步照抄屏幕上的公式进行练习。整节课学生几乎没有出错，但下课时不少学生表示\"不知道这个函数什么时候该用\"。","subQuestions":[{"q":"分析王老师教学中存在的主要问题。","answer":"①以讲授和机械模仿为主，学生处于被动接受状态，缺少主动探究；②练习任务为\"照抄公式\"，没有创设真实问题情境，学生只记住\"怎么输入\"而不理解\"什么时候用\"，知识与技能未迁移；③20 分钟连续讲授超出初中生注意力保持的有效时间，未做到精讲多练；④缺少过程性反馈与差异化的任务设计。"},{"q":"请为这节课提出改进建议。","answer":"①创设真实任务情境：给出本班成绩表，提出\"快速算出每人总分和平均分\"的真实需求，引出函数学习；②采用任务驱动/小组合作：学生先尝试自主探索，再归纳函数用法，教师精讲点拨；③设置分层任务：基础任务（求和、求平均）＋拓展任务（条件统计 COUNTIF），照顾差异；④展示评价：请学生演示作品并互评，教师针对\"函数适用场景\"进行总结提升。"}],"analysis":"本题考查信息技术课堂教学评价与教学设计。判断教学行为问题的基本框架：教学目标是否达成、学生是否主动参与、任务是否真实有效、是否关注差异与反馈。材料中\"照抄练习但不知何时用\"是典型的\"操作模仿有余、理解迁移不足\"。"},{"id":"jc02","chapter":"课程与教学论","kp":"课堂管理","difficulty":2,"type":"case","material":"李老师在上机课上布置了统一的 Word 排版练习。几分钟后，他发现部分学有余力的学生很快完成后开始偷偷玩游戏，而另一部分学生连字体设置都未完成。临近下课，李老师直接没收了两名玩游戏的学生的鼠标，并当众批评，课堂气氛一度紧张。","subQuestions":[{"q":"评价李老师的课堂管理方式。","answer":"①对玩游戏的学生简单没收、当众批评，处理方式简单粗暴，容易伤害学生自尊、激化师生矛盾，不符合教育性原则；②只安排统一任务，没有预见和应对学生操作水平的差异，是\"快的学生没事做、慢的做不完\"的直接原因；③课堂巡视与及时提醒缺位，问题在恶化后才被动处理。"},{"q":"如果你是李老师，会如何设计和管理这节上机课？","answer":"①采用分层任务设计：设置基础任务（必做）与拓展任务（选做），让快的学生完成拓展挑战或担任\"小老师\"帮助他人；②使用机房管理软件进行屏幕广播与限时控制，并加强巡视，发现苗头及时个别提醒，而不是当众惩罚；③引入过程性评价与任务过关机制（如完成打卡），让学生始终有事可做；④课后与被批评学生单独沟通，说明要求、修复关系，体现尊重与教育并重。"}],"analysis":"本题考查上机课的课堂管理与差异教学。答题要点：管理手段应\"预防在先、教育为主\"，技术课要善用分层任务和管理软件，处理学生违纪要尊重学生人格。"},{"id":"jc03","chapter":"课程与教学论","kp":"教学方法（任务驱动）","difficulty":2,"type":"case","material":"张老师教学《信息的搜索与鉴别》时创设情境：\"爷爷奶奶想去某医院看病，不知道怎么挂号、坐哪路车。\"学生分组上网搜索医院官方渠道、规划路线，并鉴别搜索结果中广告与官方信息的区别，最后各组汇报\"就医攻略\"。整节课学生参与度很高。","subQuestions":[{"q":"分析张老师这节课教学设计的优点。","answer":"①情境真实、贴近生活，能激发学习动机，让学生体会信息技术的实用价值；②任务驱动与小组合作相结合，学生在完成任务中主动建构\"如何搜索、如何评价信息\"的知识与技能；③将\"信息鉴别\"融入任务（区分广告与官方信息），指向信息意识与信息社会责任素养的培养，而非单纯教搜索引擎操作；④以成果汇报（就医攻略）作为学习产出，便于展示交流与评价。"},{"q":"结合本课说明在教学中应如何落实\"信息意识\"素养的培养。","answer":"①让学生在真实需求中主动关注信息来源，形成\"找信息先看来源\"的习惯；②通过对比官方信息与广告信息的活动，培养对信息价值与可靠性的敏感度和判断力；③引导学生根据任务需要选择恰当的获取渠道与关键词，体会信息获取的效率意识；④在汇报与互评中让学生反思\"哪些信息可用、哪些需要核实\"，将信息意识内化为行为习惯。"}],"analysis":"本题考查任务驱动教学与学科核心素养的落实。正面案例的分析套路：情境（真实、激趣）→活动方式（自主/合作/探究）→素养指向（信息意识、数字化学习与创新）→成果与评价。"},{"id":"jc04","chapter":"课程与教学论","kp":"课程性质与教学评价","difficulty":2,"type":"case","material":"期中考试前，某初中信息技术教师宣布：\"信息技术主要靠上机操作，笔试考不出水平，所以本学期不安排任何上机考核，期末以一份纸笔卷子定成绩。\"此后他的课堂也减少了上机环节，把时间用来讲解知识点和让学生背诵操作步骤。","subQuestions":[{"q":"分析该教师的做法违背了信息技术课程的哪些特点与评价要求。","answer":"①信息技术是实践性、操作性很强的课程，\"操作技能\"必须在真实上机环境中考核，取消上机考核使评价内容与课程目标脱节；②以一份纸笔测验\"一考定成绩\"，评价方式单一，缺少过程性评价，违背多元化评价理念；③为应试削减上机、让学生背诵操作步骤，背离了\"做中学\"的课程理念，学生的动手能力与数字化学习能力得不到发展。"},{"q":"请设计一个更合理的期末评价方案（至少包含两种评价方式）。","answer":"示例方案（评价方式多元、过程与结果结合）：①上机操作考核（如 40%）：在真实环境中完成文档排版、数据统计等任务，考查操作技能；②过程性评价（如 30%）：记录平时课堂任务完成情况、学习态度与小组合作表现，可采用课堂打卡/作品集（成长档案）方式；③纸笔测验（如 20%）：考查概念性知识与原理理解，占比不宜过大；④作品与展示（如 10%）：期末综合作品（如电子小报）加简短答辩或互评。方案需说明：评价应覆盖知识、技能与素养，兼顾结果与过程。"}],"analysis":"本题考查课程性质（实践性）与教学评价改革。答题时先指出\"违背了什么\"，再给出\"应该怎样\"的具体可操作方案，方案要写明各项占比或评价主体，体现可操作性。"}]},"senior":{"name":"高中信息技术","questions":[{"id":"s001","chapter":"数据与信息","kp":"大数据特征","difficulty":2,"type":"single","question":"下列不属于大数据特征（4V）的是（  ）","options":["数据体量巨大（Volume）","处理速度快（Velocity）","数据结构单一固定（Uniform）","价值密度低（Value）"],"answer":2,"analysis":"大数据 4V 特征：Volume 大量、Velocity 高速、Variety 多样、Value 价值密度低。大数据恰恰强调数据类型多样，故 C 错误。"},{"id":"s002","chapter":"数据与信息","kp":"信息与知识的层次","difficulty":3,"type":"single","question":"\"某地连续三天日平均气温均高于 22℃，可以判断该地进入气象意义的夏天\"，这一过程体现了（  ）","options":["从数据到信息的整理","从信息到知识的归纳","从知识到智慧的决策","数据的编码与压缩"],"answer":1,"analysis":"对多条信息（三天气温）进行归纳提炼，得出具有普遍解释力的结论（入夏），是从信息上升为知识的过程。"},{"id":"s003","chapter":"数据与信息","kp":"信息社会责任","difficulty":2,"type":"single","question":"某公司未经用户同意收集其人脸图像用于训练商用识别模型。该行为主要违背的伦理原则是（  ）","options":["数据共享开放原则","用户知情同意与隐私保护原则","算法效率优先原则","技术中立原则"],"answer":1,"analysis":"收集生物特征等个人敏感信息须取得用户知情同意，否则侵犯隐私权，违反信息社会责任。"},{"id":"s004","chapter":"编码与存储","kp":"原码与补码","difficulty":3,"type":"single","question":"用 8 位补码表示十进制数 -5，其二进制形式是（  ）","options":["10000101","11111010","11111011","00000101"],"answer":2,"analysis":"5 的 8 位原码为 00000101，取反得 11111010，末位加 1 得补码 11111011。A 是原码，B 是反码。"},{"id":"s005","chapter":"编码与存储","kp":"字符编码","difficulty":2,"type":"single","question":"下列关于字符编码的说法，正确的是（  ）","options":["ASCII 码用一个字节中的 7 位表示 128 个基本字符","GB2312 是国际通用的统一编码","Unicode 每个字符固定只占 1 字节","UTF-8 与 ASCII 完全不兼容"],"answer":0,"analysis":"标准 ASCII 用 7 位二进制编码，共 128 个字符；GB2312 是我国国标汉字编码；Unicode 实际实现（如 UTF-8）为变长编码；UTF-8 向下兼容 ASCII。"},{"id":"s006","chapter":"编码与存储","kp":"进制转换","difficulty":2,"type":"single","question":"与二进制数 1101101 相等的十六进制数是（  ）","options":["6D","6C","D6","B1"],"answer":0,"analysis":"按 4 位一组划分：0110 1101 → 6、D，即十六进制 6D（对应十进制 109）。"},{"id":"s007","chapter":"算法与数据结构","kp":"栈与队列","difficulty":2,"type":"single","question":"入栈序列为 1、2、3、4，且出栈可在任意入栈操作之后发生，则下列不可能的出栈序列是（  ）","options":["1、2、3、4","4、3、2、1","3、1、4、2","2、1、4、3"],"answer":2,"analysis":"要 3 先出栈，1、2、3 已依次入栈；3 出栈后栈顶是 2，只能先出 2 或继续入栈出 4，不可能直接出 1，故 3、1、4、2 不可能。"},{"id":"s008","chapter":"算法与数据结构","kp":"时间复杂度","difficulty":3,"type":"single","question":"对含有 n 个元素的有序数组进行二分查找，最坏情况下的时间复杂度是（  ）","options":["O(n)","O(log₂n)","O(n log n)","O(n²)"],"answer":1,"analysis":"二分查找每轮将查找区间减半，最坏需要比较约 log₂n 次，时间复杂度为 O(log₂n)。"},{"id":"s009","chapter":"算法与数据结构","kp":"排序算法","difficulty":3,"type":"single","question":"对序列 (5, 2, 8, 6, 3) 使用冒泡排序进行升序排列（每轮从前往后相邻比较），第一轮结束后的序列是（  ）","options":["2, 5, 6, 3, 8","2, 3, 5, 6, 8","2, 5, 8, 6, 3","2, 5, 3, 6, 8"],"answer":0,"analysis":"第一轮相邻比较交换：(5,2)→2,5；(5,8)不换；8,6→6,8；8,3→3,8，结果为 2,5,6,3,8，最大值 8 沉底。"},{"id":"s010","chapter":"算法与数据结构","kp":"算法的特征","difficulty":2,"type":"judge","question":"算法可以无限执行而不结束，只要能得到正确结果即可。","options":["正确","错误"],"answer":1,"analysis":"有穷性是算法的基本特征，算法必须在有限的步骤内终止。"},{"id":"s011","chapter":"算法与数据结构","kp":"树与二叉树","difficulty":3,"type":"single","question":"一棵二叉树共有 16 个结点，其中度为 1 的结点有 3 个，则叶结点的个数是（  ）","options":["7","8","9","6"],"answer":0,"analysis":"由树中结点与边的性质：n - 1 = n₁ + 2n₂，即 15 = 3 + 2n₂，得 n₂ = 6；又 n₀ = n₂ + 1 = 7（n₀ 为叶结点数）。也可由 n₀ + n₁ + n₂ = 16 直接验证：7 + 3 + 6 = 16，自洽。"},{"id":"s012","chapter":"Python 程序设计","kp":"列表操作","difficulty":2,"type":"single","question":"运行以下 Python 代码，输出的结果是（  ）\na = [3, 1, 4, 1, 5]\nprint(a[1:4], a[-1])","options":["['1', '4', '1'] 5","[1, 4, 1] 5","[3, 1, 4] 5","[1, 4, 1, 5] 1"],"answer":1,"analysis":"切片 a[1:4] 取下标 1~3 的元素 [1, 4, 1]（不含下标 4）；a[-1] 表示最后一个元素 5。"},{"id":"s013","chapter":"Python 程序设计","kp":"循环与分支","difficulty":3,"type":"single","question":"运行以下 Python 代码，输出的结果是（  ）\ns = 0\nfor i in range(1, 11):\n    if i % 3 == 0 or i % 5 == 0:\n        continue\n    s += i\nprint(s)","options":["26","27","22","33"],"answer":2,"analysis":"1~10 中被跳过的是 3、5、6、9、10，累加其余数：1+2+4+7+8=22。"},{"id":"s014","chapter":"Python 程序设计","kp":"函数与作用域","difficulty":3,"type":"single","question":"运行以下 Python 代码，输出的结果是（  ）\ndef f(x, lst=[]):\n    lst.append(x)\n    return lst\nprint(f(1), f(2))","options":["[1] [2]","[1, 2] [1, 2]","[1] [1, 2]","报错"],"answer":1,"analysis":"可变默认参数只在函数定义时创建一次，两次调用共用同一列表，两次 append 后均打印 [1, 2]。这是 Python 经典陷阱题。"},{"id":"s015","chapter":"Python 程序设计","kp":"字符串处理","difficulty":2,"type":"single","question":"运行 Python 语句 print(\"Information\".lower()[0:5])，输出的结果是（  ）","options":["Infor","INFOR","infor","ation"],"answer":2,"analysis":"lower() 将字符串全部转为小写 \"information\"，再取 [0:5] 得 \"infor\"。"},{"id":"s016","chapter":"Python 程序设计","kp":"字典与集合","difficulty":2,"type":"judge","question":"Python 中集合（set）中的元素是有序且可以重复的。","options":["正确","错误"],"answer":1,"analysis":"集合中的元素无序且唯一，自动去重；有序、可重复的是列表。"},{"id":"s017","chapter":"数据库","kp":"SQL 查询","difficulty":3,"type":"single","question":"数据表 score(sid, name, subject, mark)，要查询每科平均分大于 80 分的科目及平均分，正确的 SQL 语句是（  ）","options":["SELECT subject, AVG(mark) FROM score WHERE AVG(mark) > 80 GROUP BY subject","SELECT subject, AVG(mark) FROM score GROUP BY subject HAVING AVG(mark) > 80","SELECT subject, AVG(mark) FROM score HAVING AVG(mark) > 80 GROUP BY subject","SELECT subject, AVG(mark) FROM score GROUP BY subject WHERE AVG(mark) > 80"],"answer":1,"analysis":"对分组后的聚合结果筛选必须用 HAVING 子句且位于 GROUP BY 之后；WHERE 作用于分组前的原始行，不能使用聚合函数。"},{"id":"s018","chapter":"数据库","kp":"关系模型","difficulty":2,"type":"single","question":"在关系数据库中，若 A 表的外键引用 B 表的主键，则下列说法正确的是（  ）","options":["A 表中该外键的取值必须存在于 B 表主键中（或为空）","B 表中该主键的取值必须存在于 A 表中","两张表的数据类型必须完全一致","外键必须是数字类型"],"answer":0,"analysis":"外键约束（参照完整性）要求 A 表外键的取值必须能在 B 表主键中找到（或允许为空），保证表间引用有效。"},{"id":"s019","chapter":"数据库","kp":"数据管理发展阶段","difficulty":1,"type":"single","question":"与文件系统相比，数据库系统的主要优势是（  ）","options":["数据冗余度低、共享性好、独立性强","不需要操作系统支持","数据只能顺序访问","不需要任何编程语言"],"answer":0,"analysis":"数据库系统通过三级模式实现数据独立性，减少冗余、支持多用户共享并发访问，这是其相比文件系统的核心优势。"},{"id":"s020","chapter":"网络技术","kp":"TCP/IP 协议","difficulty":2,"type":"single","question":"在 TCP/IP 参考模型中，IP 协议工作在（  ）","options":["应用层","传输层","网络层（网际层）","网络接口层"],"answer":2,"analysis":"IP 协议负责寻址与路由分组，属于网络层；TCP/UDP 属于传输层，HTTP/FTP 属于应用层。"},{"id":"s021","chapter":"网络技术","kp":"HTTP 与 HTTPS","difficulty":2,"type":"single","question":"HTTPS 与 HTTP 相比，最主要的特点是（  ）","options":["传输速度更快","通过加密和证书机制保证传输安全","不需要域名解析","不使用 TCP 协议"],"answer":1,"analysis":"HTTPS 在 HTTP 之下加入 SSL/TLS 加密层，并通过数字证书验证服务器身份，保证数据传输的机密性与完整性。"},{"id":"s022","chapter":"网络技术","kp":"IP 地址与子网","difficulty":3,"type":"single","question":"某主机 IP 地址为 192.168.10.66，子网掩码为 255.255.255.192，则该主机所在子网的广播地址是（  ）","options":["192.168.10.127","192.168.10.64","192.168.10.255","192.168.10.191"],"answer":0,"analysis":"掩码 255.255.255.192 表示每段 64 个地址。66 落在 64~127 区间（子网号 64，主机位 66-64=2），广播地址为该区间最大地址 192.168.10.127。"},{"id":"s023","chapter":"信息安全","kp":"加密技术","difficulty":2,"type":"single","question":"下列关于加密技术的说法，正确的是（  ）","options":["对称加密中加密密钥与解密密钥相同","非对称加密的加密速度通常比对称加密快","MD5 是一种加密算法，可对数据解密","数字签名主要用于加密通信内容"],"answer":0,"analysis":"对称加密使用同一密钥加解密；非对称加密（如 RSA）更慢；MD5 是哈希（摘要）算法不可逆；数字签名用于验证身份与完整性，不是加密内容。"},{"id":"s024","chapter":"人工智能与物联网","kp":"机器学习类型","difficulty":2,"type":"single","question":"使用大量已标注\"猫/狗\"的图片训练分类模型，这种学习方式属于（  ）","options":["监督学习","无监督学习","强化学习","迁移学习"],"answer":0,"analysis":"训练数据带有标签（猫/狗标注），属于监督学习；无监督学习处理无标签数据；强化学习通过奖惩信号学习策略。"},{"id":"s025","chapter":"人工智能与物联网","kp":"物联网体系结构","difficulty":3,"type":"single","question":"智慧农业系统中，传感器采集土壤温湿度并上传云端分析，最后控制阀门自动灌溉。按物联网三层体系结构，\"传感器采集\"属于（  ）","options":["感知层","网络层","应用层","表示层"],"answer":0,"analysis":"物联网分为感知层（传感器、RFID 等数据采集）、网络层（数据传输）与应用层（分析控制服务），传感器采集属于感知层。"},{"id":"s026","chapter":"人工智能与物联网","kp":"人工智能应用","difficulty":1,"type":"judge","question":"语音识别技术可以将人说的话自动转换为文字。","options":["正确","错误"],"answer":0,"analysis":"语音识别（ASR）是人工智能的典型应用，用于将语音信号转换为文本；反向过程为语音合成。"},{"id":"s027","chapter":"多媒体技术","kp":"图像数字化","difficulty":3,"type":"single","question":"一幅分辨率为 1024×768 的黑白二值图像（每像素 1 位），不经压缩的存储容量约为（  ）","options":["约 96KB","约 768KB","约 12KB","约 192KB"],"answer":0,"analysis":"容量 = 1024×768×1 bit = 786432 bit = 98304 B = 96 KB。注意二值图像每像素仅 1 位。"},{"id":"s028","chapter":"多媒体技术","kp":"多媒体编码","difficulty":2,"type":"judge","question":"MP3 是一种无损音频压缩格式。","options":["正确","错误"],"answer":1,"analysis":"MP3 利用人耳听觉特性进行有损压缩，去掉人耳不易感知的声音成分；无损压缩格式如 FLAC。"},{"id":"s029","chapter":"数字化学习","kp":"数字化学习环境","difficulty":2,"type":"single","question":"下列关于数字化学习的说法，错误的是（  ）","options":["数字化学习资源具有多媒体化、共享性强的特点","在线学习平台可以支持个性化学习进度","数字化学习将完全取代线下课堂","数字化学习需要学习者具备一定的自主学习能力"],"answer":2,"analysis":"数字化学习是线下学习的重要补充与融合（线上线下混合式学习），\"完全取代\"说法绝对化，不符合教育规律。"},{"id":"s030","chapter":"课程与教学论","kp":"学科核心素养","difficulty":2,"type":"single","question":"学生在使用搜索引擎时，能够辨别信息来源的可靠性并主动核实信息真伪，这主要体现了（  ）","options":["计算思维","信息意识","数字化学习与创新","信息社会责任"],"answer":1,"analysis":"对信息来源可靠性的敏感与判断属于信息意识素养；信息社会责任侧重道德伦理层面，计算思维侧重问题求解思维，数字化学习侧重利用工具开展学习。"},{"id":"s031","chapter":"课程与教学论","kp":"计算思维","difficulty":3,"type":"single","question":"将\"求解班级最高分\"分解为\"输入成绩→遍历比较→记录最大值→输出结果\"四个步骤，这种思维方法属于计算思维中的（  ）","options":["抽象","问题分解","数据挖掘","并行计算"],"answer":1,"analysis":"把复杂问题拆分为若干可处理的子问题，属于问题分解（decomposition），是计算思维的组成要素之一。"},{"id":"s032","chapter":"课程与教学论","kp":"教学设计","difficulty":3,"type":"single","question":"张老师设计\"编写植物识别小程序\"项目课，评价方案包括：代码功能测试（40%）、过程性记录（30%）、答辩展示（30%）。该评价设计最主要的特点是（  ）","options":["单一纸笔测验","多元化评价主体与过程性评价相结合","只关注结果性数据","随机性评价"],"answer":1,"analysis":"评价兼顾作品结果（功能测试）、学习过程（过程性记录）与表达交流（答辩），体现了多元、过程性与终结性相结合的评价理念。"},{"id":"s033","chapter":"课程与教学论","kp":"教学方法比较","difficulty":2,"type":"single","question":"\"以问题为主线、以学生自主探究和小组协作为主要活动形式\"的教学组织方式，通常称为（  ）","options":["注入式教学","项目式/探究式教学","机械操练教学","单向演示教学"],"answer":1,"analysis":"以真实问题（项目）为驱动、强调自主探究与协作的项目式学习（PBL），符合信息技术新课标倡导的教学方式。"},{"id":"s034","chapter":"课程与教学论","kp":"课堂管理","difficulty":2,"type":"single","question":"上机教学中，为避免学生操作进度差异过大影响教学效果，最适宜采用的策略是（  ）","options":["统一放慢进度等待最慢的学生","设置分层任务，允许学有余力的学生完成拓展挑战","取消所有上机操作","只让进度快的学生演示"],"answer":1,"analysis":"分层（弹性）任务设计能兼顾不同水平学生：基础任务保底、拓展任务提升，是上机课差异教学的常用策略。"},{"id":"s035","chapter":"课程与教学论","kp":"课程标准理解","difficulty":2,"type":"judge","question":"高中信息技术课程属于国家必修课程中的技术领域，\"信息社会责任\"是学科核心素养之一。","options":["正确","错误"],"answer":0,"analysis":"《普通高中信息技术课程标准（2017 年版 2020 年修订）》将信息技术纳入技术领域必修课程，凝练了信息意识、计算思维、数字化学习与创新、信息社会责任四大核心素养。"},{"id":"sc01","chapter":"课程与教学论","kp":"算法与程序实现教学","difficulty":3,"type":"case","material":"赵老师教学《用 Python 求解最值问题》时，先在讲台上完整讲了一遍\"遍历比较求最大值\"的思路，随后把写好的完整程序（约 15 行）投在屏幕上，让学生用 5 分钟抄写并运行。运行成功后直接进入下一节内容。课后测试发现，多数学生面对\"求最小值\"的变式题无从下手。","subQuestions":[{"q":"分析学生\"会运行却不会变式\"的原因。","answer":"①学生只是抄写代码，未经历\"理解算法思想→分解问题→逐步实现\"的思维过程，获得的是\"程序结果\"而非\"算法能力\"；②教师直接给出完整代码，剥夺了学生自主建构的机会，学生不了解每行代码\"为什么这样写\"；③缺少变式训练与迁移环节，\"求最大值\"的思路没有内化，遇到\"求最小值\"时无法完成关键改写（初始值取法与比较方向的调整）；④5 分钟抄写＋运行的节奏没有留出思考与试错时间。"},{"q":"请重新设计这一内容的教学过程（写出主要环节）。","answer":"示例（问题分解＋梯度任务设计）：环节一，情境引入：给出班级成绩单，提出\"找出最高分\"的真实问题；环节二，问题分解：引导学生把问题拆为\"①怎么记当前最大值（设初值）②怎么比较（遍历）③怎么更新（替换）\"，用流程图梳理算法；环节三，半成品编程：提供留有空缺的代码框架（初值设置处、比较条件处留白），学生分组讨论补全，教师巡视点拨；环节四，变式迁移：提出\"求最低分\"\"求平均分\"，要求学生说明需要改动哪些语句并验证；环节五，总结提升：归纳\"遍历比较\"类问题的通用模式，并请小组展示讲解。"}],"analysis":"本题考查算法教学的核心理念：程序教学的目标是\"算法思维\"而非\"代码抄写\"。要点：问题分解、半成品/脚手架、变式迁移、思维外显（流程图、讲题）。这也是计算思维素养在课堂中的落实方式。"},{"id":"sc02","chapter":"课程与教学论","kp":"教学媒体选择","difficulty":2,"type":"case","material":"周老师教学《人工智能初探》一课时，认为\"讲概念太枯燥\"，于是整节课播放了 40 分钟的人工智能主题科幻电影，学生看得津津有味，下课铃响后周老师匆匆布置了作业\"写一篇观后感\"。","subQuestions":[{"q":"分析这节课的主要问题。","answer":"①教学目标缺失：观看电影未与明确的课程目标（如了解人工智能的基本概念、典型应用）挂钩，媒体使用偏离教学需要；②整节课放电影属于媒体滥用，学生处于被动娱乐状态，没有认知参与和思维加工；③缺少必要的讲解、讨论与总结环节，学生获得的是感性印象而非知识结构；④作业\"写观后感\"要求笼统，没有可评价的标准，与课程内容脱节。"},{"q":"若仍想使用该电影片段，请给出合理的教学设计。","answer":"①明确目标：先确定本课目标（如能举例说明人工智能的典型应用与技术特点）；②精选片段：只截取 3～5 分钟与目标直接相关的片段，而不是完整放映；③带着任务看：观看前布置观察问题（如\"片中哪些技术是人工智能？哪些是科幻想象？\"）；④观后加工：组织小组讨论、举例辨析（区分现实应用与科幻），教师讲解基本概念；⑤作业具体化：如\"找出生活中 3 个人工智能应用实例，并说明它解决什么问题\"，使作业可评价、可反馈。"}],"analysis":"本题考查教学媒体的选择与使用。原则：媒体服务于目标，\"辅助\"而非\"替代\"教学；要有观看前任务、观看后加工，避免娱乐化、被动化。"},{"id":"sc03","chapter":"课程与教学论","kp":"概念教学（数据库）","difficulty":3,"type":"case","material":"吴老师教学《数据库与数据表》时，以\"班级图书管理\"为项目情境：学生分组讨论\"一本图书要记录哪些信息\"，把讨论结果整理成表格，再围绕\"用哪个字段作主键\"展开辩论（有组主张\"书名\"，有组主张\"编号\"），教师最后讲解主键的性质并让学生用 SQL 建表插入数据验证。学生反映\"第一次觉得主键不是死记的概念\"。","subQuestions":[{"q":"分析吴老师教学中体现的教学思想与方法。","answer":"①项目化/情境化教学：用\"班级图书管理\"真实情境引入，让抽象的\"表、字段、主键\"有了经验依托；②概念建构式教学：主键概念不是直接告知，而是让学生在\"书名可否重复\"的真实辩论中自己发现\"唯一标识\"的必要性，实现有意义学习；③合作学习与思维碰撞：分组讨论与辩论使不同理解相互澄清，暴露前概念错误（如\"书名不会重复\"）并得到纠正；④实践验证：用 SQL 建表插入重复值触发错误，让学生用操作验证结论，体现\"做中学\"与概念—操作的闭环。"},{"q":"有教师认为\"这种探究太花时间，不如直接讲定义再刷题\"，请谈谈你的看法。","answer":"①应辩证看待：探究式教学确实占用时间，但概念性知识（如主键）的意义理解直接影响后续 SQL 查询、表设计等复杂学习，\"先理解后应用\"的总效率更高；②直接讲授＋刷题可以让学生会应付同类试题，但知识僵化，难以迁移到新情境（如自行设计数据库），也不利于计算思维素养的落实；③实践中可以折中：对核心概念采用探究建构，对操作性细节（如 SQL 语法）采用讲解＋练习提高效率；④时间问题可通过半成品材料、明确的小组分工与限时讨论来控制，不必追求\"全程探究\"。"}],"analysis":"本题考查概念教学与探究式教学的评价。亮点分析套路：情境引入→概念自主建构→合作交流→实践验证；评价类开放题需要观点明确＋正反论证＋给出兼顾效率的可操作折中方案。"},{"id":"sc04","chapter":"课程与教学论","kp":"教学评价设计","difficulty":2,"type":"case","material":"钱老师教学《数字化学习工具的综合应用》单元后，布置了一个\"制作学习主题演示文稿\"的单元作品。期末评分时，他仅依据提交的 PPT 文件是否\"美观完整\"给出一个分数，平时课堂上学生的选题讨论、素材搜集过程均未记录，部分过程认真但作品朴素的学生分数偏低，意见较大。","subQuestions":[{"q":"分析该评价方案存在的问题。","answer":"①评价维度单一：只看作品\"美观完整\"的结果，未评价选题合理性、信息加工能力、工具综合运用等单元核心目标；②缺少过程性评价：选题讨论、素材搜集等学习过程未纳入评价，无法反映学生的努力与进步；③评价标准模糊且主观：\"美观完整\"没有可操作的评价量规，分数随意性大；④评价主体单一：只有教师评分，缺少学生自评与互评，学生无法从评价中获得改进信息。"},{"q":"请为该单元作品设计一套多元评价方案。","answer":"示例：①制定评价量规，明确维度与权重：主题与内容（选题价值、信息准确性）、技术运用（工具综合应用、素材处理）、设计表达（结构逻辑、视觉呈现）、创新性；②过程性评价（如 30%）：记录选题讨论参与度、素材搜集清单、阶段进度检查，可用学习日志/档案袋；③作品评价（如 50%）：依据量规打分，量规提前公布给学生，发挥导向作用；④展示与互评（如 20%）：作品展示＋同伴互评＋作者自评（说明制作思路与不足），评价主体多元化；⑤反馈改进：评价后给出具体改进建议，并允许学生修改作品后二次提交，发挥评价的发展性功能。"}],"analysis":"本题考查多元评价与量规设计。问题分析从\"评价维度、评价过程、评价标准、评价主体\"四角度展开；方案要落到\"量规＋权重＋过程记录＋多主体\"的可操作层面，并体现评价促进学习（而非仅甄别）的理念。"}]}};
+
+const DIFF_TEXT = { 1: '基础', 2: '中等', 3: '较难' };
+const ABCD = ['A', 'B', 'C', 'D'];
+
+// ==================== 状态 ====================
+let subject = 'junior';
+let wrongSubject = 'junior';
+let mode = 'all'; // all / chapter / exam / case / wrong
+let list = [];
+let cur = 0;
+let answers = {};      // qid -> 选择的选项下标（客观题）
+let ratedMap = {};     // case 子问自评：qid -> 1/0
+let finished = false;
+
+// ==================== 存储 ====================
+function loadProgress(sub) {
+  try { return JSON.parse(localStorage.getItem('itquiz_' + sub + '_progress') || '{}'); }
+  catch (e) { return {}; }
+}
+function saveProgress(sub, p) { localStorage.setItem('itquiz_' + sub + '_progress', JSON.stringify(p)); }
+function loadWrong(sub) {
+  try { return JSON.parse(localStorage.getItem('itquiz_' + sub + '_wrong') || '{}'); }
+  catch (e) { return {}; }
+}
+function saveWrong(sub, w) { localStorage.setItem('itquiz_' + sub + '_wrong', JSON.stringify(w)); }
+
+function recordAnswer(sub, qid, ok) {
+  const p = loadProgress(sub);
+  p[qid] = (p[qid] === 1 || ok) ? 1 : 0;
+  saveProgress(sub, p);
+  const w = loadWrong(sub);
+  if (ok) delete w[qid]; else w[qid] = (w[qid] || 0) + 1;
+  saveWrong(sub, w);
+}
+
+function getStats(sub) {
+  const p = loadProgress(sub);
+  const ids = Object.keys(p);
+  const done = ids.length;
+  const correct = ids.filter(id => p[id] === 1).length;
+  return { done, correct, accuracy: done ? Math.round(correct / done * 100) : 0, total: BANKS[sub].questions.length };
+}
+
+// ==================== 工具 ====================
+function shuffle(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+function esc(s) { return String(s); } // 题库为自有数据，直接输出；textContent 渲染见下
+
+function showView(id) {
+  ['view-home', 'view-quiz', 'view-wrong', 'view-mine'].forEach(v => document.getElementById(v).classList.toggle('hide', v !== id));
+  if (id === 'view-wrong') renderWrong();
+  if (id === 'view-mine') renderMine();
+  if (id === 'view-home') renderHome();
+  window.scrollTo(0, 0);
+}
+
+// ==================== 首页渲染 ====================
+function switchSubject(s) {
+  subject = s;
+  document.querySelectorAll('#view-home .subject-switch .s-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.subject === s));
+  renderHome();
+}
+
+function renderHome() {
+  const st = getStats(subject);
+  document.getElementById('st-done').innerHTML = st.done + '<small id="st-total"> / ' + st.total + '</small>';
+  document.getElementById('st-correct').textContent = st.correct;
+  document.getElementById('st-acc').textContent = st.accuracy + '%';
+
+  // 章节列表
+  const chapters = [];
+  const map = {};
+  BANKS[subject].questions.forEach(q => { if (!map[q.chapter]) { map[q.chapter] = { name: q.chapter, count: 0 }; chapters.push(map[q.chapter]); } map[q.chapter].count++; });
+  document.getElementById('chapter-list').innerHTML = chapters.map(c =>
+    '<div class="card chapter-card" onclick="startChapter(\'' + c.name.replace(/'/g, "\\'") + '\')">' +
+    '<div class="chapter-name">' + c.name + '</div>' +
+    '<div><span class="chapter-count">' + c.count + ' 题</span><span class="mode-arrow">›</span></div></div>').join('');
+}
+
+// ==================== 组题 ====================
+function buildList(m, chapter) {
+  let qs = BANKS[subject].questions.slice();
+  if (m === 'case') qs = qs.filter(q => q.type === 'case');
+  if (m === 'chapter') qs = qs.filter(q => q.chapter === chapter);
+  if (m === 'exam') qs = qs.filter(q => q.type !== 'case'); // 模拟测试只含客观题
+  if (m === 'all') {
+    const p = loadProgress(subject);
+    // 未掌握的排前面
+    qs = qs.filter(q => p[q.id] !== 1).concat(qs.filter(q => p[q.id] === 1));
+  }
+  if (m === 'exam') qs = shuffle(qs).slice(0, Math.min(20, qs.length));
+  return qs;
+}
+
+function startQuiz(m) {
+  mode = m;
+  list = buildList(m);
+  if (!list.length) { alert('题库为空'); return; }
+  const titles = { all: '顺序刷题', case: '材料分析题专练', exam: '模拟测试' };
+  enterQuiz(titles[m] || '刷题');
+}
+
+function startChapter(chapter) {
+  mode = 'chapter';
+  list = buildList('chapter', chapter);
+  enterQuiz(chapter);
+}
+
+function enterQuiz(title) {
+  cur = 0; answers = {}; ratedMap = {}; finished = false;
+  document.getElementById('quiz-title').textContent = title;
+  document.getElementById('exam-submit-wrap').classList.toggle('hide', mode !== 'exam');
+  document.getElementById('exam-note').classList.toggle('hide', mode !== 'exam');
+  showView('view-quiz');
+  renderQuestion();
+}
+
+function startExam() {
+  if (!confirm('模拟测试将随机抽取 20 道客观题，作答时不显示对错，交卷后统一出分。开始吗？')) return;
+  startQuiz('exam');
+}
+
+function startWrongQuiz() {
+  mode = 'wrong';
+  const w = loadWrong(wrongSubject);
+  const ids = Object.keys(w);
+  list = BANKS[wrongSubject].questions.filter(q => ids.indexOf(q.id) >= 0).sort((a, b) => (w[b.id] - w[a.id]));
+  subject = wrongSubject; // 记录进度落到对应科目
+  if (!list.length) { alert('错题本是空的，太棒了！'); return; }
+  cur = 0; answers = {}; ratedMap = {}; finished = false;
+  document.getElementById('quiz-title').textContent = '错题重刷';
+  document.getElementById('exam-submit-wrap').classList.add('hide');
+  document.getElementById('exam-note').classList.add('hide');
+  showView('view-quiz');
+  renderQuestion();
+}
+
+function quitQuiz() {
+  if (mode === 'exam' && !finished) {
+    if (!confirm('模拟测试尚未交卷，退出后本次作答不计分。确定退出吗？')) return;
+  }
+  showView('view-home');
+}
+
+// ==================== 答题渲染 ====================
+function renderQuestion() {
+  const q = list[cur];
+  document.getElementById('quiz-progress').textContent = (cur + 1) + '/' + list.length;
+  document.getElementById('btn-prev').disabled = cur === 0;
+
+  let html = '<div class="card question-card">';
+  html += '<div class="q-meta">';
+  html += '<span class="tag">' + q.chapter + '</span>';
+  html += '<span class="tag tag-d' + q.difficulty + '">' + (DIFF_TEXT[q.difficulty] || '基础') + '</span>';
+  html += '<span class="tag">' + (q.type === 'judge' ? '判断' : q.type === 'case' ? '材料分析' : '单选') + '</span>';
+  html += '</div>';
+
+  if (q.type === 'case') {
+    // ===== 材料分析题 =====
+    html += '<div class="material"><div class="material-label">【材料】</div>' + q.material + '</div>';
+    q.subQuestions.forEach((sq, i) => {
+      const rated = ratedMap[q.id + '_' + i];
+      html += '<div class="subq"><div class="subq-q"><b>' + (i + 1) + '.</b> ' + sq.q + '</div>';
+      if (rated !== undefined) {
+        html += '<div class="subq-answer"><b>参考答案：</b>' + sq.answer + '</div>';
+        html += '<div class="rate-done">已自评：' + (rated === 1 ? '✅ 答到了要点' : '❌ 没答到要点（已记入错题本）') + '</div>';
+      } else {
+        html += '<button class="btn-ref" onclick="showRef(' + i + ')">查看参考答案</button>';
+      }
+      html += '</div>';
+    });
+    const allRated = q.subQuestions.every((sq, i) => ratedMap[q.id + '_' + i] !== undefined);
+    if (allRated) {
+      const ok = q.subQuestions.every((sq, i) => ratedMap[q.id + '_' + i] === 1);
+      recordAnswer(subject, q.id, ok);
+      html += '<div class="analysis"><div class="analysis-title ' + (ok ? 'ok' : 'no') + '">' +
+        (ok ? '✅ 本题各小问均答到要点，已标记掌握' : '❌ 存在未答到要点的小问，已记入错题本') + '</div>' +
+        '<div class="analysis-body">' + (q.analysis || '') + '</div></div>';
+    }
+  } else {
+    // ===== 客观题 =====
+    const sel = answers[q.id];
+    const showFeedback = mode !== 'exam' && sel !== undefined;
+    html += '<div class="q-text">' + q.question + '</div>';
+    q.options.forEach((opt, i) => {
+      let cls = 'option';
+      if (showFeedback) {
+        if (i === q.answer) cls += ' correct';
+        else if (i === sel) cls += ' wrong';
+      } else if (sel === i) cls += ' selected';
+      let mark = '';
+      if (showFeedback && i === q.answer) mark = '<span class="opt-mark">✓</span>';
+      if (showFeedback && i === sel && sel !== q.answer) mark = '<span class="opt-mark wrong">✗</span>';
+      html += '<div class="' + cls + '" onclick="pick(' + i + ')"><div class="opt-label">' + ABCD[i] + '</div><div class="opt-text">' + opt + '</div>' + mark + '</div>';
+    });
+    if (showFeedback) {
+      const ok = sel === q.answer;
+      html += '<div class="analysis"><div class="analysis-title ' + (ok ? 'ok' : 'no') + '">' +
+        (ok ? '✅ 回答正确' : '❌ 正确答案：' + ABCD[q.answer]) + '</div>' +
+        '<div class="analysis-body">' + (q.analysis || '') + '</div></div>';
+      if (!renderQuestion._recorded || renderQuestion._recorded !== cur + '_' + q.id) {
+        renderQuestion._recorded = cur + '_' + q.id;
+        recordAnswer(subject, q.id, ok);
+      }
+    }
+  }
+  html += '</div>';
+  document.getElementById('question-area').innerHTML = html;
+
+  const lastBtn = document.getElementById('btn-next');
+  lastBtn.textContent = (cur + 1 >= list.length) ? (mode === 'exam' ? '交卷' : '完成') : '下一题';
+}
+
+function pick(i) {
+  const q = list[cur];
+  if (mode !== 'exam' && answers[q.id] !== undefined) return; // 练习模式已作答锁定
+  answers[q.id] = i;
+  renderQuestion();
+}
+
+function showRef(i) {
+  const q = list[cur];
+  const ok = confirm('看过参考答案后请如实自评：你的答案是否答到了要点？\n\n（点击"确定"= 答到要点，"取消"= 没答到）');
+  ratedMap[q.id + '_' + i] = ok ? 1 : 0;
+  renderQuestion();
+}
+
+function prevQ() { if (cur > 0) { cur--; renderQuestion(); } }
+
+function nextQ() {
+  if (mode === 'exam') {
+    // 检查当前题是否已作答
+    const q = list[cur];
+    if (answers[q.id] === undefined) {
+      if (!confirm('本题尚未作答（未作答按错误计），要直接跳过吗？')) return;
+    }
+    if (cur + 1 < list.length) { cur++; renderQuestion(); return; }
+    submitExam(); // 最后一题点击交卷
+    return;
+  }
+  // 练习模式：当前题未完成时提示
+  const q = list[cur];
+  if (q.type === 'case') {
+    const allRated = q.subQuestions.every((sq, i) => ratedMap[q.id + '_' + i] !== undefined);
+    if (!allRated) {
+      if (!confirm('本题还有小问未自评，跳过将不计入进度。继续下一题吗？')) return;
+    }
+  } else if (answers[q.id] === undefined) {
+    if (!confirm('本题尚未作答，跳过将不计入进度。继续下一题吗？')) return;
+  }
+  if (cur + 1 < list.length) { cur++; renderQuestion(); }
+  else showResult();
+}
+
+function submitExam() {
+  const unanswered = list.length - Object.keys(answers).length;
+  let msg = unanswered > 0
+    ? '还有 ' + unanswered + ' 题未作答（按错误计），确认交卷吗？'
+    : '交卷后立即出分，是否确认？';
+  if (!confirm(msg)) return;
+  showResult();
+}
+
+// ==================== 出分 ====================
+function showResult() {
+  finished = true;
+  let score = 0;
+  list.forEach(q => {
+    const ok = (q.type === 'case')
+      ? q.subQuestions.every((sq, i) => ratedMap[q.id + '_' + i] === 1)
+      : answers[q.id] === q.answer;
+    recordAnswer(subject, q.id, ok);
+    if (ok) score += 5;
+  });
+  const wrongIds = list.filter(q =>
+    q.type !== 'case' && answers[q.id] !== q.answer);
+  let html = '<div class="card result">';
+  html += '<div class="score-circle"><div class="score-num">' + score + '</div><div class="score-unit">分</div></div>';
+  html += '<div class="result-title">' + (score >= 80 ? '继续保持，稳了！' : score >= 60 ? '及格了，再冲一冲' : '别灰心，错题刷起来') + '</div>';
+  if (mode === 'exam') {
+    html += '<div style="font-size:13px;color:#999;margin-bottom:16px;">共 ' + list.length + ' 题，每题 5 分，满分 ' + (list.length * 5) + ' 分</div>';
+  }
+  html += '<button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="redoWrongFromResult()">看本题集的错题解析</button>';
+  html += '<button class="btn btn-ghost" style="width:100%;" onclick="showView(\'view-home\')">返回首页</button>';
+  html += '</div>';
+  document.getElementById('question-area').innerHTML = html;
+  document.getElementById('quiz-progress').textContent = '已交卷';
+  document.getElementById('btn-prev').disabled = true;
+  document.getElementById('btn-next').disabled = true;
+  window.scrollTo(0, 0);
+}
+
+function redoWrongFromResult() {
+  // 筛出本题集答错的题，进入回顾（练习模式逐题看解析）
+  const w = loadWrong(subject);
+  list = list.filter(q => w[q.id]);
+  if (!list.length) { alert('本题集全部答对，太棒了！'); return; }
+  mode = 'chapter'; // 复用练习模式（即时反馈）
+  cur = 0; answers = {}; finished = false;
+  document.getElementById('quiz-title').textContent = '错题回顾';
+  document.getElementById('exam-submit-wrap').classList.add('hide');
+  document.getElementById('exam-note').classList.add('hide');
+  renderQuestion();
+  document.getElementById('btn-next').disabled = false;
+  window.scrollTo(0, 0);
+}
+
+// ==================== 错题本 ====================
+function switchWrongSubject(s) {
+  wrongSubject = s;
+  document.getElementById('ws-junior').classList.toggle('active', s === 'junior');
+  document.getElementById('ws-senior').classList.toggle('active', s === 'senior');
+  renderWrong();
+}
+
+function renderWrong() {
+  const w = loadWrong(wrongSubject);
+  const ids = Object.keys(w);
+  const body = document.getElementById('wrong-body');
+  if (!ids.length) {
+    body.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">错题本是空的</div><div class="empty-sub">答错的题会自动收进来，帮你精准补漏</div></div>';
+    return;
+  }
+  const items = BANKS[wrongSubject].questions
+    .filter(q => ids.indexOf(q.id) >= 0)
+    .sort((a, b) => w[b.id] - w[a.id]);
+  let html = '<div class="op-bar"><span class="op-count">共 ' + items.length + ' 道错题</span>' +
+    '<span><button class="btn-mini" onclick="startWrongQuiz()">重刷错题</button>' +
+    '<button class="btn-mini danger" onclick="clearWrongAll()">清空</button></span></div>';
+  items.forEach(q => {
+    html += '<div class="card wrong-card">';
+    html += '<div class="q-meta"><span class="tag">' + q.chapter + '</span>' +
+      '<span class="tag tag-d' + q.difficulty + '">' + (DIFF_TEXT[q.difficulty] || '基础') + '</span>' +
+      (w[q.id] > 1 ? '<span class="tag tag-d3">错 ' + w[q.id] + ' 次</span>' : '') + '</div>';
+    if (q.type === 'case') {
+      html += '<div class="material"><div class="material-label">【材料】</div>' + q.material + '</div>';
+      q.subQuestions.forEach((sq, i) => {
+        html += '<div class="subq"><div class="subq-q"><b>' + (i + 1) + '.</b> ' + sq.q + '</div>' +
+          '<div class="subq-answer"><b>参考答案：</b>' + sq.answer + '</div></div>';
+      });
+    } else {
+      html += '<div class="q-text">' + q.question + '</div>';
+      html += '<div class="w-answer">正确答案：' + ABCD[q.answer] + '. ' + q.options[q.answer] + '</div>';
+    }
+    html += '<div class="w-analysis">解析：' + (q.analysis || '见参考答案要点') + '</div></div>';
+  });
+  body.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+function clearWrongAll() {
+  if (!confirm('确定清空「' + (wrongSubject === 'junior' ? '初中' : '高中') + '」科目的全部错题吗？')) return;
+  saveWrong(wrongSubject, {});
+  renderWrong();
+}
+
+// ==================== 我的 ====================
+function renderMine() {
+  let html = '';
+  ['junior', 'senior'].forEach(k => {
+    const st = getStats(k);
+    const wc = Object.keys(loadWrong(k)).length;
+    html += '<div class="card" style="margin-top:12px;">';
+    html += '<div class="stat-name">' + BANKS[k].name + '</div>';
+    html += '<div class="stat-row"><span>刷题进度</span><b>' + st.done + ' / ' + st.total + '</b></div>';
+    html += '<div class="stat-row"><span>正确率</span><b>' + st.accuracy + '%</b></div>';
+    html += '<div class="stat-row"><span>待消灭错题</span><b class="' + (wc ? 'warn' : '') + '">' + wc + '</b></div>';
+    html += '</div>';
+  });
+  document.getElementById('mine-body').innerHTML = html;
+}
+
+function resetAll() {
+  if (!confirm('将清空全部刷题进度与错题记录，且无法恢复。确定吗？')) return;
+  ['junior', 'senior'].forEach(k => {
+    localStorage.removeItem('itquiz_' + k + '_progress');
+    localStorage.removeItem('itquiz_' + k + '_wrong');
+  });
+  renderMine();
+  alert('已重置');
+}
+
+// 初始化
+renderHome();
+</script>
+</body>
+</html>
