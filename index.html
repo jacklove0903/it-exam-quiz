@@ -332,7 +332,17 @@
     <div class="topbar">
       <div class="topbar-title"><button class="back-btn" onclick="showView('view-home')">‹ 返回</button><span>我的 / 学习统计</span><span></span></div>
     </div>
-    <div id="mine-body"></div>
+        <div id="mine-body"></div>
+    <div class="card" style="margin:20px 14px 0;">
+      <div class="stat-name">进度备份 / 迁移</div>
+      <div style="font-size:12px;color:#999;margin:6px 0 10px;line-height:1.6;">进度保存在本设备浏览器中，换设备或清理缓存会丢失。导出备份码保存好，随时可导入到任何设备恢复进度。</div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="exportBackup()">导出进度备份码</button>
+      <button class="btn btn-ghost" style="width:100%;" onclick="toggleBackupPanel()">导入进度备份码</button>
+      <div id="backup-panel" class="hide" style="margin-top:12px;">
+        <textarea id="backup-io" style="width:100%;height:110px;box-sizing:border-box;font-size:11px;border:1px solid #ddd;border-radius:8px;padding:8px;word-break:break-all;" placeholder="导出后这里会显示备份码；导入时把备份码粘贴到这里"></textarea>
+        <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="doImportBackup()">确认导入</button>
+      </div>
+    </div>
     <button class="btn btn-danger-ghost" style="margin:20px 14px 0; width:calc(100% - 28px);" onclick="resetAll()">重置学习数据</button>
   </div>
 </div>
@@ -710,6 +720,52 @@ function renderMine() {
     html += '</div>';
   });
   document.getElementById('mine-body').innerHTML = html;
+}
+
+// ==================== 进度备份 ====================
+function toggleBackupPanel() {
+  const p = document.getElementById('backup-panel');
+  p.classList.toggle('hide');
+  if (!p.classList.contains('hide')) document.getElementById('backup-io').value = '';
+}
+function exportBackup() {
+  const payload = { app: 'itquiz', v: 1, time: Date.now(), data: {} };
+  ['junior', 'senior'].forEach(k => {
+    payload.data[k + '_progress'] = localStorage.getItem('itquiz_' + k + '_progress') || null;
+    payload.data[k + '_wrong'] = localStorage.getItem('itquiz_' + k + '_wrong') || null;
+  });
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  document.getElementById('backup-panel').classList.remove('hide');
+  const ta = document.getElementById('backup-io');
+  ta.value = code;
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  if (!ok && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(function () {
+      alert('备份码已生成并复制，请粘贴到微信收藏/备忘录保存');
+    }, function () {
+      alert('备份码已生成，请长按全选复制保存');
+    });
+    return;
+  }
+  alert(ok ? '备份码已生成并复制到剪贴板，请粘贴到微信收藏/备忘录保存' : '备份码已生成，请长按全选复制保存');
+}
+function doImportBackup() {
+  const raw = document.getElementById('backup-io').value.trim();
+  if (!raw) { alert('请先粘贴备份码'); return; }
+  let payload;
+  try {
+    payload = JSON.parse(decodeURIComponent(escape(atob(raw))));
+  } catch (e) { alert('备份码格式不对，请检查是否完整复制（首尾不能缺字）'); return; }
+  if (!payload || payload.app !== 'itquiz' || !payload.data) { alert('备份码无效'); return; }
+  ['junior', 'senior'].forEach(k => {
+    const pr = payload.data[k + '_progress'], wr = payload.data[k + '_wrong'];
+    if (pr) localStorage.setItem('itquiz_' + k + '_progress', pr);
+    if (wr) localStorage.setItem('itquiz_' + k + '_wrong', wr);
+  });
+  renderMine();
+  alert('导入成功，进度已恢复！');
 }
 
 function resetAll() {
