@@ -343,6 +343,14 @@
         <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="doImportBackup()">确认导入</button>
       </div>
     </div>
+    <div class="card" style="margin:14px;">
+      <div class="stat-name">云同步</div>
+      <div id="sync-status" style="font-size:12px;color:#888;margin:6px 0 8px;line-height:1.6;">正在检查云端连接…</div>
+      <div style="font-size:12px;color:#666;margin-bottom:8px;">同步码：<b id="sync-uid" style="color:#333;"></b></div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:10px;" onclick="copyUid()">复制同步码</button>
+      <input id="sync-uid-input" style="width:100%;box-sizing:border-box;height:38px;border:1px solid #ddd;border-radius:8px;padding:0 10px;font-size:13px;" placeholder="粘贴另一台设备的同步码">
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="bindUid()">用同步码绑定</button>
+    </div>
     <button class="btn btn-danger-ghost" style="margin:20px 14px 0; width:calc(100% - 28px);" onclick="resetAll()">重置学习数据</button>
   </div>
 </div>
@@ -369,12 +377,123 @@ function loadProgress(sub) {
   try { return JSON.parse(localStorage.getItem('itquiz_' + sub + '_progress') || '{}'); }
   catch (e) { return {}; }
 }
-function saveProgress(sub, p) { localStorage.setItem('itquiz_' + sub + '_progress', JSON.stringify(p)); }
+function saveProgress(sub, p) { localStorage.setItem('itquiz_' + sub + '_progress', JSON.stringify(p)); schedulePush(); }
+// ==================== 云同步（Supabase） ====================
+const CLOUD = { url: "__SB_URL__", key: "__SB_KEY__", table: 'quiz_progress' };
+
+function cloudEnabled() {
+  return CLOUD.url.indexOf('http') === 0 && CLOUD.key.indexOf('__SB') !== 0 && CLOUD.key.length > 20;
+}
+function syncUid() {
+  var u = localStorage.getItem('itquiz_uid');
+  if (!u) {
+    u = 'u' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+    localStorage.setItem('itquiz_uid', u);
+  }
+  return u;
+}
+function cloudHeaders(extra) {
+  var h = {
+    'apikey': CLOUD.key,
+    'Authorization': 'Bearer ' + CLOUD.key,
+    'Content-Type': 'application/json'
+  };
+  if (extra) for (var k in extra) h[k] = extra[k];
+  return h;
+}
+function snapshot() {
+  return {
+    junior_progress: loadProgress('junior'),
+    senior_progress: loadProgress('senior'),
+    junior_wrong: loadWrong('junior'),
+    senior_wrong: loadWrong('senior')
+  };
+}
+function applySnapshot(d) {
+  if (!d) return;
+  ['junior', 'senior'].forEach(function (k) {
+    if (d[k + '_progress']) localStorage.setItem('itquiz_' + k + '_progress', JSON.stringify(d[k + '_progress']));
+    if (d[k + '_wrong']) localStorage.setItem('itquiz_' + k + '_wrong', JSON.stringify(d[k + '_wrong']));
+  });
+}
+function setSyncState(state, ts) {
+  var el = document.getElementById('sync-status');
+  if (!el) return;
+  if (state === 'off') { el.innerHTML = '未配置云端（当前仅保存在本设备）'; return; }
+  if (state === 'pulling') { el.innerHTML = '正在从云端拉取进度…'; return; }
+  if (state === 'pushing') { el.innerHTML = '正在同步到云端…'; return; }
+  if (state === 'err') { el.innerHTML = '<b style="color:#c0392b;">云端连接失败</b>，进度仍保存在本设备'; return; }
+  var t = ts ? new Date(ts) : new Date();
+  var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+  el.innerHTML = '<b style="color:#2e7d5b;">已开启云同步</b> · 上次同步 ' +
+    pad(t.getMonth() + 1) + '-' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+}
+function cloudPull(cb) {
+  if (!cloudEnabled()) { setSyncState('off'); if (cb) cb(false); return; }
+  setSyncState('pulling');
+  fetch(CLOUD.url + '/rest/v1/' + CLOUD.table + '?uid=eq.' + encodeURIComponent(syncUid()) + '&select=data,updated_at', {
+    headers: cloudHeaders()
+  }).then(function (r) {
+    if (!r.ok) throw new Error('http ' + r.status);
+    return r.json();
+  }).then(function (rows) {
+    if (rows && rows.length && rows[0].data && Object.keys(rows[0].data).length) {
+      applySnapshot(rows[0].data);
+      setSyncState('ok', rows[0].updated_at);
+    } else {
+      setSyncState('ok');
+      cloudPush();
+    }
+    if (cb) cb(true);
+  }).catch(function () {
+    setSyncState('err');
+    if (cb) cb(false);
+  });
+}
+var pushTimer = null;
+function schedulePush() {
+  if (!cloudEnabled()) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(cloudPush, 1200);
+}
+function cloudPush() {
+  if (!cloudEnabled()) return;
+  setSyncState('pushing');
+  fetch(CLOUD.url + '/rest/v1/' + CLOUD.table, {
+    method: 'POST',
+    headers: cloudHeaders({ 'Prefer': 'resolution=merge-duplicates' }),
+    body: JSON.stringify({ uid: syncUid(), data: snapshot(), updated_at: new Date().toISOString() })
+  }).then(function (r) {
+    if (!r.ok) throw new Error('http ' + r.status);
+    setSyncState('ok');
+  }).catch(function () { setSyncState('err'); });
+}
+function copyUid() {
+  var u = syncUid();
+  var ta = document.createElement('textarea');
+  ta.value = u;
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  alert(ok ? '同步码已复制：' + u + '\n在另一台设备上「我的 → 用同步码绑定」粘贴即可' : '你的同步码是：' + u);
+}
+function bindUid() {
+  var v = (document.getElementById('sync-uid-input').value || '').trim();
+  if (!/^u[a-z0-9]{6,24}$/.test(v)) { alert('同步码格式不对，应是以 u 开头的 10 位左右字符'); return; }
+  localStorage.setItem('itquiz_uid', v);
+  cloudPull(function () {
+    renderMine();
+    alert('已切换到该同步码，进度已从云端恢复');
+  });
+}
+
 function loadWrong(sub) {
   try { return JSON.parse(localStorage.getItem('itquiz_' + sub + '_wrong') || '{}'); }
   catch (e) { return {}; }
 }
-function saveWrong(sub, w) { localStorage.setItem('itquiz_' + sub + '_wrong', JSON.stringify(w)); }
+function saveWrong(sub, w) { localStorage.setItem('itquiz_' + sub + '_wrong', JSON.stringify(w)); schedulePush(); }
 
 function recordAnswer(sub, qid, ok) {
   const p = loadProgress(sub);
@@ -720,6 +839,9 @@ function renderMine() {
     html += '</div>';
   });
   document.getElementById('mine-body').innerHTML = html;
+  var uEl = document.getElementById('sync-uid');
+  if (uEl) uEl.textContent = syncUid();
+  if (!cloudEnabled()) setSyncState('off');
 }
 
 // ==================== 进度备份 ====================
@@ -780,6 +902,12 @@ function resetAll() {
 
 // 初始化
 renderHome();
+syncUid();
+cloudPull(function () {
+  renderHome();
+  var mv = document.getElementById('view-mine');
+  if (mv && !mv.classList.contains('hide')) renderMine();
+});
 </script>
 </body>
 </html>
